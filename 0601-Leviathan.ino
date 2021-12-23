@@ -1,41 +1,42 @@
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
-#endif
 #include <ESPAsyncWebServer.h>
- 
-//******Enter your network credentials************
-const char* ssid = "Your Network SSID";
-const char* password = "Your network Password";
-//************************************************
- 
-//Define Status
-const char* PARAM_INPUT_1 = "state";
-const char* PARAM_INPUT_2 = "state2";
- 
+#include "WAC.h" //Create WAC.h to store creds
+
+const char *ssid = "SSID";
+const char *password = "PW";
+//#define SSID "Wireless Access Point"
+//#define PW "Password"
+//add to git ignore
+
+// Define Status
+const char *PARAM_INPUT_1 = "state";
+const char *PARAM_INPUT_2 = "state2";
+
 //**********Pin Assignments***********
-const int relay1 = 16; // D0 Pin of NodeMcu, change it if you are using ESP32
+const int relay1 = 16;  // D0 Pin of NodeMcu, change it if you are using ESP32
 const int switch1 = 12; // D6 Pin of NodeMcu, change it if you are using ESP32
-const int relay2 = 5; // D1 Pin of NodeMcu, change it if you are using ESP32
+const int relay2 = 5;   // D1 Pin of NodeMcu, change it if you are using ESP32
 const int switch2 = 14; // D5 Pin of NodeMcu, change it if you are using ESP32
 //************************************
- 
+
 //*********************Variables declaration**********************
-int relay_1_status = LOW; // the current status of relay1
-int switch_1_status; // the current status of switch1
+int relay_1_status = LOW;       // the current status of relay1
+int switch_1_status;            // the current status of switch1
 int last_switch_1_status = LOW; // Last status of switch1
-int relay_2_status = LOW; // the current status of relay2
-int switch_2_status; // the current status of switch2
+int relay_2_status = LOW;       // the current status of relay2
+int switch_2_status;            // the current status of switch2
 int last_switch_2_status = LOW; // Last status of switch2
 //****************************************************************
- 
+
 // the following variables are unsigned longs because the time, measured in
 // milliseconds, will quickly become a bigger number than can be stored in an int.
 unsigned long lastDebounceTime = 0; // the last time the output pin was toggled
-unsigned long debounceDelay = 50; // the debounce time; increase if the output flickers
- 
+unsigned long debounceDelay = 50;   // the debounce time; increase if the output flickers
+
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
- 
+
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
 <head>
@@ -72,7 +73,7 @@ xhr.open("GET", "/update?state=0", true);
 }
 xhr.send();
 }
- 
+
 function toggleCheckbox2(element)
 {
 var xhr2 = new XMLHttpRequest();
@@ -86,7 +87,7 @@ xhr2.open("GET", "/update?state2=0", true);
 }
 xhr2.send();
 }
- 
+
 setInterval(function ( )
 {
 var xhttp = new XMLHttpRequest();
@@ -96,7 +97,7 @@ if (this.readyState == 4 && this.status == 200)
 {
 var inputChecked;
 var outputStateM;
- 
+
 if( this.responseText == 1)
 {
 inputChecked = true;
@@ -113,7 +114,7 @@ document.getElementById("outputState").innerHTML = outputStateM;
 }
 xhttp.open("GET", "/state", true);
 xhttp.send();
- 
+
 var xhttp2 = new XMLHttpRequest();
 xhttp2.onreadystatechange = function()
 {
@@ -121,7 +122,7 @@ if (this.readyState == 4 && this.status == 200)
 {
 var inputChecked2;
 var outputStateM2;
- 
+
 if( this.responseText == 1)
 {
 inputChecked2 = true;
@@ -138,96 +139,94 @@ document.getElementById("outputState2").innerHTML = outputStateM2;
 };
 xhttp2.open("GET", "/state2", true);
 xhttp2.send();
- 
+
 }, 1000 ) ;
 </script>
 </body>
 </html>
 )rawliteral";
- 
+
 // Replaces placeholder with button section in your web page
-String processor(const String& var)
+String processor(const String &var)
 {
-//Serial.println(var);
-if(var == "BUTTONPLACEHOLDER")
-{
-String buttons1 ="";
-String outputStateValue = outputState();
-buttons1+= "<h4>Device 1 - Status <span id=\"outputState\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"output\" " + outputStateValue + "><span class=\"slider\"></span></label>";
-return buttons1;
+    // Serial.println(var);
+    if (var == "BUTTONPLACEHOLDER")
+    {
+        String buttons1 = "";
+        String outputStateValue = outputState();
+        buttons1 += "<h4>Device 1 - Status <span id=\"outputState\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"output\" " + outputStateValue + "><span class=\"slider\"></span></label>";
+        return buttons1;
+    }
+
+    if (var == "BUTTONPLACEHOLDER2")
+    {
+        String buttons2 = "";
+        String outputStateValue2 = outputState2();
+        buttons2 += "<h4>Device 2 - Status <span id=\"outputState2\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox2(this)\" id=\"output2\" " + outputStateValue2 + "><span class=\"slider\"></span></label>";
+        return buttons2;
+    }
+    return String();
 }
- 
-if(var == "BUTTONPLACEHOLDER2")
-{
-String buttons2 ="";
-String outputStateValue2 = outputState2();
-buttons2+= "<h4>Device 2 - Status <span id=\"outputState2\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox2(this)\" id=\"output2\" " + outputStateValue2 + "><span class=\"slider\"></span></label>";
-return buttons2;
-}
-return String();
-}
- 
+
 String outputState()
 {
-if(digitalRead(relay1))
-{
-return "checked";
-}
-else
-{
-return "";
-}
-return "";
+    if (digitalRead(relay1))
+    {
+        return "checked";
+    }
+    else
+    {
+        return "";
+    }
+    return "";
 }
 String outputState2()
 {
-if(digitalRead(relay2))
-{
-return "checked";
+    if (digitalRead(relay2))
+    {
+        return "checked";
+    }
+    else
+    {
+        return "";
+    }
+    return "";
 }
-else
-{
-return "";
-}
-return "";
-}
- 
+
 void setup()
 {
-// Serial port for debugging purposes
-Serial.begin(115200);
- 
-pinMode(relay1, OUTPUT);
-digitalWrite(relay1, LOW);
-pinMode(switch1, INPUT);
- 
-pinMode(relay2, OUTPUT);
-digitalWrite(relay2, LOW);
-pinMode(switch2, INPUT);
- 
-// Connect to Wi-Fi
-WiFi.begin(ssid, password);
-while (WiFi.status() != WL_CONNECTED)
-{
-delay(1000);
-Serial.println("Connecting to WiFi..");
-}
- 
-// Print ESP Local IP Address
-Serial.println(WiFi.localIP());
- 
-// Route for root / web page
-server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-{
-request->send_P(200, "text/html", index_html, processor);
-});
- 
-// Send a GET request
-server.on("/update", HTTP_GET, [] (AsyncWebServerRequest *request)
-{
+    // Serial port for debugging purposes
+    Serial.begin(115200);
+
+    pinMode(relay1, OUTPUT);
+    digitalWrite(relay1, LOW);
+    pinMode(switch1, INPUT);
+
+    pinMode(relay2, OUTPUT);
+    digitalWrite(relay2, LOW);
+    pinMode(switch2, INPUT);
+
+    // Connect to Wi-Fi
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(1000);
+        Serial.println("Connecting to WiFi..");
+    }
+
+    // Print ESP Local IP Address
+    Serial.println(WiFi.localIP());
+
+    // Route for root / web page
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send_P(200, "text/html", index_html, processor); });
+
+    // Send a GET request
+    server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
 String inputMessage;
 String inputParam;
- 
+
 // GET input1 value on <ESP_IP>/update?state=<inputMessage>
 if (request->hasParam(PARAM_INPUT_1))
 {
@@ -243,10 +242,10 @@ inputParam = "none";
 }
 Serial.println(inputMessage);
 request->send(200, "text/plain", "OK");
- 
+
 String inputMessage2;
 String inputParam2;
- 
+
 if (request->hasParam(PARAM_INPUT_2))
 {
 inputMessage2 = request->getParam(PARAM_INPUT_2)->value();
@@ -260,65 +259,60 @@ inputMessage2 = "No message sent";
 inputParam2 = "none";
 }
 Serial.println(inputMessage2);
-request->send(200, "text/plain", "OK");
-});
- 
-// Send a GET request to <ESP_IP>/state
-server.on("/state", HTTP_GET, [] (AsyncWebServerRequest *request)
-{
-request->send(200, "text/plain", String(digitalRead(relay1)).c_str());
-});
- 
-server.on("/state2", HTTP_GET, [] (AsyncWebServerRequest *request)
-{
-request->send(200, "text/plain", String(digitalRead(relay2)).c_str());
-});
-// Start server
-server.begin();
+request->send(200, "text/plain", "OK"); });
+
+    // Send a GET request to <ESP_IP>/state
+    server.on("/state", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(200, "text/plain", String(digitalRead(relay1)).c_str()); });
+
+    server.on("/state2", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(200, "text/plain", String(digitalRead(relay2)).c_str()); });
+    // Start server
+    server.begin();
 }
- 
+
 void loop()
 {
-int reading1 = digitalRead(switch1);
-if (reading1 != last_switch_1_status)
-{
-lastDebounceTime = millis(); // reset the debouncing timer
-}
- 
-if ((millis() - lastDebounceTime) > debounceDelay) 
-{ 
-if (reading1 != switch_1_status)
-{
-switch_1_status = reading1;
-if (switch_1_status == HIGH)
-{
-relay_1_status = !relay_1_status;
-}
-}
-}
- 
-int reading2 = digitalRead(switch2);
-if (reading2 != last_switch_2_status)
-{
-lastDebounceTime = millis();
-}
- 
-if ((millis() - lastDebounceTime) > debounceDelay)
-{
-if (reading2 != switch_2_status)
-{
-switch_2_status = reading2;
-if (switch_2_status == HIGH)
-{
-relay_2_status = !relay_2_status;
-}
-}
-}
-// set the LED:
-digitalWrite(relay1, relay_1_status);
-digitalWrite(relay2, relay_2_status);
- 
-// save the reading. Next time through the loop, it'll be the lastButtonState:
-last_switch_1_status = reading1;
-last_switch_2_status = reading2;
+    int reading1 = digitalRead(switch1);
+    if (reading1 != last_switch_1_status)
+    {
+        lastDebounceTime = millis(); // reset the debouncing timer
+    }
+
+    if ((millis() - lastDebounceTime) > debounceDelay)
+    {
+        if (reading1 != switch_1_status)
+        {
+            switch_1_status = reading1;
+            if (switch_1_status == HIGH)
+            {
+                relay_1_status = !relay_1_status;
+            }
+        }
+    }
+
+    int reading2 = digitalRead(switch2);
+    if (reading2 != last_switch_2_status)
+    {
+        lastDebounceTime = millis();
+    }
+
+    if ((millis() - lastDebounceTime) > debounceDelay)
+    {
+        if (reading2 != switch_2_status)
+        {
+            switch_2_status = reading2;
+            if (switch_2_status == HIGH)
+            {
+                relay_2_status = !relay_2_status;
+            }
+        }
+    }
+    // set the LED:
+    digitalWrite(relay1, relay_1_status);
+    digitalWrite(relay2, relay_2_status);
+
+    // save the reading. Next time through the loop, it'll be the lastButtonState:
+    last_switch_1_status = reading1;
+    last_switch_2_status = reading2;
 }
