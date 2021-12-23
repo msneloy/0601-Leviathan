@@ -1,26 +1,22 @@
 #include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+#include <ESPAsyncTCP.h> //https://github.com/me-no-dev/ESPAsyncTCP
+#include <ESPAsyncWebServer.h> //https://github.com/me-no-dev/ESPAsyncWebServer
 #include "WAC.h" //Create WAC.h to store creds
 
-const char *ssid = "SSID";
-const char *password = "PW";
+const char *ssid = SSID;
+const char *password = PW;
 //#define SSID "Wireless Access Point"
 //#define PW "Password"
 //add to git ignore
 
-// Define Status
 const char *PARAM_INPUT_1 = "state";
 const char *PARAM_INPUT_2 = "state2";
 
-//**********Pin Assignments***********
-const int relay1 = 16;  // D0 Pin of NodeMcu, change it if you are using ESP32
-const int switch1 = 12; // D6 Pin of NodeMcu, change it if you are using ESP32
-const int relay2 = 5;   // D1 Pin of NodeMcu, change it if you are using ESP32
-const int switch2 = 14; // D5 Pin of NodeMcu, change it if you are using ESP32
-//************************************
+const int relay1 = D0;
+const int switch1 = 12;
+const int relay2 = D4;
+const int switch2 = 14;
 
-//*********************Variables declaration**********************
 int relay_1_status = LOW;       // the current status of relay1
 int switch_1_status;            // the current status of switch1
 int last_switch_1_status = LOW; // Last status of switch1
