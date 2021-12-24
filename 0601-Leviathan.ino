@@ -1,6 +1,11 @@
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h> //https://github.com/me-no-dev/ESPAsyncTCP
 #include <ESPAsyncWebServer.h> //https://github.com/me-no-dev/ESPAsyncWebServer
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_PCD8544.h>
 #include "WAC.h" //Create WAC.h to store creds
 
 const char *ssid = SSID;
@@ -8,6 +13,10 @@ const char *password = PW;
 //#define SSID "Wireless Access Point"
 //#define PW "Password"
 //add to git ignore
+
+Adafruit_PCD8544 display = Adafruit_PCD8544(D4, D3, D2, D1, D0);
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "asia.pool.ntp.org", 21600, 60000);
 
 const char *PARAM_INPUT_1 = "state";
 const char *PARAM_INPUT_2 = "state2";
@@ -18,13 +27,14 @@ const int switch2 = D6;
 const int relay1 = D7;
 const int relay2 = D8;
 
-int relay_1_status = HIGH;       // the current status of relay1
-int switch_1_status;            // the current status of switch1
-int last_switch_1_status = LOW; // Last status of switch1
-int relay_2_status = HIGH;       // the current status of relay2
-int switch_2_status;            // the current status of switch2
-int last_switch_2_status = LOW; // Last status of switch2
-//****************************************************************
+int relay_1_status = HIGH;
+int switch_1_status;
+int last_switch_1_status = LOW;
+int relay_2_status = HIGH;
+int switch_2_status;
+int last_switch_2_status = LOW;
+
+//keep the relays HIGH or else they'll trip right after boot
 
 // the following variables are unsigned longs because the time, measured in
 // milliseconds, will quickly become a bigger number than can be stored in an int.
@@ -37,13 +47,13 @@ AsyncWebServer server(80);
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
 <head>
-<title>Blyatiful</title>
+<title>0601-Leviathan</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 html {font-family: Arial; display: inline-block; text-align: center;}
 h2 {font-size: 3.0rem;}
 p {font-size: 3.0rem;}
-body {max-width: 600px; margin:0px auto; padding-bottom: 25px;}
+body {max-width: 600px; margin:0px auto; padding-bottom: 25px;background-color: black; color:white}
 .switch {position: relative; display: inline-block; width: 120px; height: 68px}
 .switch input {display: none}
 .slider {position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: #F63E36; border-radius: 34px}
@@ -53,9 +63,12 @@ input:checked+.slider:before {-webkit-transform: translateX(52px); -ms-transform
 </style>
 </head>
 <body>
-<h2>DJ BlyatMan</h2>
-%BUTTONPLACEHOLDER%
+<h2>0601-Leviathan</h2>
+<h3>Prototype RDS</h3>
+%BUTTONPLACEHOLDER1%
 %BUTTONPLACEHOLDER2%
+<h4>Intellectual property of</h4>
+<h1>Mega Genie</h1>
 <script>
 function toggleCheckbox(element)
 {
@@ -147,11 +160,11 @@ xhttp2.send();
 String processor(const String &var)
 {
     // Serial.println(var);
-    if (var == "BUTTONPLACEHOLDER")
+    if (var == "BUTTONPLACEHOLDER1")
     {
         String buttons1 = "";
         String outputStateValue = outputState();
-        buttons1 += "<h4>Device 1 - Status <span id=\"outputState\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"output\" " + outputStateValue + "><span class=\"slider\"></span></label>";
+        buttons1 += "<h4>Relay 01 - Status : <span id=\"outputState\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"output\" " + outputStateValue + "><span class=\"slider\"></span></label>";
         return buttons1;
     }
 
@@ -159,7 +172,7 @@ String processor(const String &var)
     {
         String buttons2 = "";
         String outputStateValue2 = outputState2();
-        buttons2 += "<h4>Device 2 - Status <span id=\"outputState2\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox2(this)\" id=\"output2\" " + outputStateValue2 + "><span class=\"slider\"></span></label>";
+        buttons2 += "<h4>Relay 02 - Status : <span id=\"outputState2\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox2(this)\" id=\"output2\" " + outputStateValue2 + "><span class=\"slider\"></span></label>";
         return buttons2;
     }
     return String();
@@ -194,7 +207,10 @@ void setup()
 {
     // Serial port for debugging purposes
     Serial.begin(115200);
-
+    display.begin();
+    display.setContrast(50);
+    display.setTextSize(1);
+    display.setTextColor(BLACK);
     pinMode(relay1, OUTPUT);
     digitalWrite(relay1, LOW);
     pinMode(switch1, INPUT);
@@ -266,10 +282,44 @@ request->send(200, "text/plain", "OK"); });
               { request->send(200, "text/plain", String(digitalRead(relay2)).c_str()); });
     // Start server
     server.begin();
+      timeClient.begin();
 }
 
 void loop()
 {
+    timeClient.update();
+    display.clearDisplay();
+    
+    display.setCursor(0, 0);
+    display.println("Time: "+timeClient.getFormattedTime());
+    
+    display.setCursor(0, 8);
+    display.println(WiFi.localIP());
+    
+    display.setCursor(0, 16);
+    display.println();
+    
+    if (relay_1_status == 1) {
+    display.setCursor(0, 24);
+    display.println("R01 Status:ON");
+    } else if (relay_1_status == 0) {
+    display.setCursor(0, 24);
+    display.println("R01 Status:OFF");
+    }
+    
+    if (relay_2_status == 1) {
+    display.setCursor(0, 32);
+    display.println("R02 Status:ON");
+    } else if (relay_2_status == 0) {
+    display.setCursor(0, 32);
+    display.println("R02 Status:OFF");
+    }
+
+    display.setCursor(0, 40);
+    display.println("HID:"+WiFi.hostname());
+    
+    display.display();
+    
     int reading1 = digitalRead(switch1);
     if (reading1 != last_switch_1_status)
     {
