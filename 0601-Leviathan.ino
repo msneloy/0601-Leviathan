@@ -12,15 +12,16 @@ const char *password = PW;
 const char *PARAM_INPUT_1 = "state";
 const char *PARAM_INPUT_2 = "state2";
 
-const int relay1 = D0;
-const int switch1 = 12;
-const int relay2 = D4;
-const int switch2 = 14;
+const int switch1 = D5;
+const int switch2 = D6;
 
-int relay_1_status = LOW;       // the current status of relay1
+const int relay1 = D7;
+const int relay2 = D8;
+
+int relay_1_status = HIGH;       // the current status of relay1
 int switch_1_status;            // the current status of switch1
 int last_switch_1_status = LOW; // Last status of switch1
-int relay_2_status = LOW;       // the current status of relay2
+int relay_2_status = HIGH;       // the current status of relay2
 int switch_2_status;            // the current status of switch2
 int last_switch_2_status = LOW; // Last status of switch2
 //****************************************************************
@@ -36,7 +37,7 @@ AsyncWebServer server(80);
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
 <head>
-<title>NodeMCU based Web Server</title>
+<title>Blyatiful</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 html {font-family: Arial; display: inline-block; text-align: center;}
@@ -52,7 +53,7 @@ input:checked+.slider:before {-webkit-transform: translateX(52px); -ms-transform
 </style>
 </head>
 <body>
-<h2>NodeMCU based Web Server</h2>
+<h2>DJ BlyatMan</h2>
 %BUTTONPLACEHOLDER%
 %BUTTONPLACEHOLDER2%
 <script>
