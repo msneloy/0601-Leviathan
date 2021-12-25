@@ -291,13 +291,13 @@ void loop()
     display.clearDisplay();
     
     display.setCursor(0, 0);
-    display.println("Time: "+timeClient.getFormattedTime());
+    display.println("Mega Genie R&D");
     
     display.setCursor(0, 8);
-    display.println(WiFi.localIP());
+    display.println("Time: "+timeClient.getFormattedTime());
     
     display.setCursor(0, 16);
-    display.println();
+    display.println(WiFi.localIP());
     
     if (relay_1_status == 1) {
     display.setCursor(0, 24);
