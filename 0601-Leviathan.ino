@@ -164,7 +164,7 @@ String processor(const String &var)
     {
         String buttons1 = "";
         String outputStateValue = outputState();
-        buttons1 += "<h4>Relay 01 - Status : <span id=\"outputState\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"output\" " + outputStateValue + "><span class=\"slider\"></span></label>";
+        buttons1 += "<h4>Fan - Status : <span id=\"outputState\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox(this)\" id=\"output\" " + outputStateValue + "><span class=\"slider\"></span></label>";
         return buttons1;
     }
 
@@ -172,7 +172,7 @@ String processor(const String &var)
     {
         String buttons2 = "";
         String outputStateValue2 = outputState2();
-        buttons2 += "<h4>Relay 02 - Status : <span id=\"outputState2\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox2(this)\" id=\"output2\" " + outputStateValue2 + "><span class=\"slider\"></span></label>";
+        buttons2 += "<h4>Light - Status : <span id=\"outputState2\"><span></h4><label class=\"switch\"><input type=\"checkbox\" onchange=\"toggleCheckbox2(this)\" id=\"output2\" " + outputStateValue2 + "><span class=\"slider\"></span></label>";
         return buttons2;
     }
     return String();
